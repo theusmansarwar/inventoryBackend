@@ -16,7 +16,7 @@ const dead = require("./Routes/DeadRoutes");
 const assetLocation = require("./Routes/AssetLocationRoutes");
 const AuthRoutes = require("./Routes/AuthRoutes");
 const app = express();
-const port = 5000;
+const port = 5008;
 
 // ✅ CORS Middleware
 app.use(cors({
