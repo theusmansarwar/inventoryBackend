@@ -6,6 +6,10 @@ const maintenanceSchema = new mongoose.Schema(
          type: String, 
          required: true
          },
+     maintenanceId:{
+     type: String,
+      unique: true,    
+     },
     issue: {
          type: String, 
          required: true

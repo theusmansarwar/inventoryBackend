@@ -25,16 +25,13 @@ const Product = require("../Models/ProductModel");
 // Create Product
 const createProduct = async (req, res) => {
   try {
-    const { productName, category, status} = req.body;
+    const { productName, category, status } = req.body;
 
     const missingFields = [];
 
-    //  Validate required only if publishing
-  
-      if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
-      if (!category) missingFields.push({ name: "category", message: "Category is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
- 
+    if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
+    if (!category) missingFields.push({ name: "category", message: "Category is required" });
+    if (!status) missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -44,10 +41,22 @@ const createProduct = async (req, res) => {
       });
     }
 
+    // ✅ Find the latest productId and increment it instead of counting documents
+    const lastProduct = await Product.findOne().sort({ createdAt: -1 });
+
+    let nextNumber = 1;
+    if (lastProduct && lastProduct.productId) {
+      const lastIdNumber = parseInt(lastProduct.productId.split("-")[1]);
+      nextNumber = lastIdNumber + 1;
+    }
+
+    const productId = `pro-${nextNumber.toString().padStart(4, "0")}`;
+
     const product = new Product({
       productName,
       category,
       status,
+      productId,
     });
 
     await product.save();

@@ -5,6 +5,10 @@ const licenseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    licenseId:{
+      type: String,
+      unique: true,
+    },
     licenseKey: {
         type: String,
         required: true,

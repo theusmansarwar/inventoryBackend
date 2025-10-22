@@ -7,6 +7,10 @@ const supplierSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    supplierId:{
+      type: String,
+      unique: true,
+    },
     contact: {
       type: String,
       required: true,

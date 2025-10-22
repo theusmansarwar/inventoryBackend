@@ -7,7 +7,11 @@ const assetAssignmentSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    employeeName: {
+    assignmentId:{
+       type: String,
+      unique: true,
+    },
+    employeeName:{
         type: String,
         required: true,
         trim: true

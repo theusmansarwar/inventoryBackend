@@ -7,6 +7,10 @@ const assetLocationSchema = new mongoose.Schema(
       type: String,
      
     },
+    locationId:{
+      type: String,
+      unique: true,
+    },
     branch: {
       type: String,
    

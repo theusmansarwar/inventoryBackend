@@ -25,18 +25,16 @@ const Supplier= require("../Models/SupplierModel");
 // Create Supplier
 const createSupplier = async (req, res) => {
   try {
-    const { name, contact, email, address, status} = req.body;
+    const { name, contact, email, address, status } = req.body;
 
     const missingFields = [];
 
-    // ✅ Validate required only if publishing
-   
-      if (!name) missingFields.push({ name: "name", message: "Name is required" });
-      if (!contact) missingFields.push({ name: "contact", message: "Contact is required" });
-      if (!email) missingFields.push({ name: "email", message: "Email is required" });
-      if (!address) missingFields.push({ name: "address", message: "Address is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
-    
+    // ✅ Validate required fields
+    if (!name) missingFields.push({ name: "name", message: "Name is required" });
+    if (!contact) missingFields.push({ name: "contact", message: "Contact is required" });
+    if (!email) missingFields.push({ name: "email", message: "Email is required" });
+    if (!address) missingFields.push({ name: "address", message: "Address is required" });
+    if (!status) missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -46,7 +44,20 @@ const createSupplier = async (req, res) => {
       });
     }
 
+    // ✅ Generate unique supplierId like "sup-0001"
+    const lastSupplier = await Supplier.findOne().sort({ createdAt: -1 });
+
+    let newIdNumber = 1;
+    if (lastSupplier && lastSupplier.supplierId) {
+      const lastNumber = parseInt(lastSupplier.supplierId.split("-")[1]);
+      newIdNumber = lastNumber + 1;
+    }
+
+    const supplierId = `sup-${newIdNumber.toString().padStart(4, "0")}`;
+
+    // ✅ Create new supplier with generated ID
     const supplier = new Supplier({
+      supplierId,
       name,
       contact,
       email,

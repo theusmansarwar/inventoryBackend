@@ -32,14 +32,12 @@ const createMaintenance = async (req, res) => {
 
     const missingFields = [];
 
-    // 🔍 Validate required only if publishing
-  
-      if (!assetName) missingFields.push({ name: "assetName", message: "Asset Name is required" });
-      if (!issue) missingFields.push({ name: "issue", message: "Issue is required" });
-      if (!reportedDate) missingFields.push({ name: "reportedDate", message: "Reported Date is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
-      if (!expense) missingFields.push({ name: "expense", message: "Expense is required" });
-   
+    // 🔍 Validate required fields
+    if (!assetName) missingFields.push({ name: "assetName", message: "Asset Name is required" });
+    if (!issue) missingFields.push({ name: "issue", message: "Issue is required" });
+    if (!reportedDate) missingFields.push({ name: "reportedDate", message: "Reported Date is required" });
+    if (!status) missingFields.push({ name: "status", message: "Status is required" });
+    if (!expense) missingFields.push({ name: "expense", message: "Expense is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -49,7 +47,20 @@ const createMaintenance = async (req, res) => {
       });
     }
 
+    // ✅ Generate unique maintenanceId like "mnt-0001"
+    const lastMaintenance = await Maintenance.findOne().sort({ createdAt: -1 });
+
+    let newIdNumber = 1; // Default start if no record exists
+    if (lastMaintenance && lastMaintenance.maintenanceId) {
+      const lastNumber = parseInt(lastMaintenance.maintenanceId.split("-")[1]);
+      newIdNumber = lastNumber + 1;
+    }
+
+    const maintenanceId = `mnt-${newIdNumber.toString().padStart(4, "0")}`;
+
+    // ✅ Create new maintenance record with generated ID
     const maintenance = new Maintenance({
+      maintenanceId,
       assetName,
       issue,
       reportedDate,
@@ -67,7 +78,11 @@ const createMaintenance = async (req, res) => {
       data: maintenance,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      status: 500,
+      message: "Something went wrong while creating maintenance record",
+      details: error.message,
+    });
   }
 };
 

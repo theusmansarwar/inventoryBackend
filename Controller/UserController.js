@@ -39,18 +39,16 @@ const User = require("../Models/UserModel");
 // Create User
 const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, status} = req.body;
+    const { name, email, password, role, status } = req.body;
 
     const missingFields = [];
 
-    // ✅ Validate required only if publishing
-  
-      if (!name) missingFields.push({ name: "name", message: "Name is required" });
-      if (!email) missingFields.push({ name: "email", message: "Email is required" });
-      if (!password) missingFields.push({ name: "password", message: "Password is required" });
-      if (!role) missingFields.push({ name: "role", message: "Role is required" });
-      if (status === undefined) missingFields.push({ name: "status", message: "Status is required" });
-    
+    // ✅ Validate required fields
+    if (!name) missingFields.push({ name: "name", message: "Name is required" });
+    if (!email) missingFields.push({ name: "email", message: "Email is required" });
+    if (!password) missingFields.push({ name: "password", message: "Password is required" });
+    if (!role) missingFields.push({ name: "role", message: "Role is required" });
+    if (status === undefined) missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -66,10 +64,23 @@ const createUser = async (req, res) => {
       return res.status(400).json({ status: 400, message: "Invalid role ID" });
     }
 
+    // ✅ Generate unique userId like "usr-0001"
+    const lastUser = await User.findOne().sort({ createdAt: -1 });
+
+    let newIdNumber = 1;
+    if (lastUser && lastUser.userId) {
+      const lastNumber = parseInt(lastUser.userId.split("-")[1]);
+      newIdNumber = lastNumber + 1;
+    }
+
+    const userId = `usr-${newIdNumber.toString().padStart(4, "0")}`;
+
+    // ✅ Create new user with generated ID
     const user = new User({
+      userId,
       name,
       email,
-      password, // ⚠️ yahan bcrypt use karna better hai
+      password, // ⚠️ Consider hashing later with bcrypt
       role,
       status,
     });
@@ -89,7 +100,6 @@ const createUser = async (req, res) => {
     });
   }
 };
-
 
 //get all users
 const listUser= async(req, res) => {

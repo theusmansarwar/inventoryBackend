@@ -35,14 +35,12 @@ const addLicense = async (req, res) => {
 
     const missingFields = [];
 
-    // 🔍 Validate required fields only if publishing
-   
-      if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
-      if (!licenseKey) missingFields.push({ name: "licenseKey", message: "License Key is required" });
-      if (!expiryDate) missingFields.push({ name: "expiryDate", message: "Expiry Date is required" });
-      if (!assignedTo) missingFields.push({ name: "assignedTo", message: "Assigned To is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
-    
+    // 🔍 Validate required fields
+    if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
+    if (!licenseKey) missingFields.push({ name: "licenseKey", message: "License Key is required" });
+    if (!expiryDate) missingFields.push({ name: "expiryDate", message: "Expiry Date is required" });
+    if (!assignedTo) missingFields.push({ name: "assignedTo", message: "Assigned To is required" });
+    if (!status) missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -52,7 +50,20 @@ const addLicense = async (req, res) => {
       });
     }
 
+    // ✅ Generate unique licenseId like "lic-0001"
+    const lastLicense = await License.findOne().sort({ createdAt: -1 });
+
+    let newIdNumber = 1; // default start
+    if (lastLicense && lastLicense.licenseId) {
+      const lastNumber = parseInt(lastLicense.licenseId.split("-")[1]);
+      newIdNumber = lastNumber + 1;
+    }
+
+    const licenseId = `lic-${newIdNumber.toString().padStart(4, "0")}`;
+
+    // ✅ Create new license with generated ID
     const license = new License({
+      licenseId,
       productName,
       licenseKey,
       expiryDate,
@@ -69,7 +80,11 @@ const addLicense = async (req, res) => {
       data: license,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      status: 500,
+      message: "Something went wrong while creating license",
+      details: error.message,
+    });
   }
 };
 

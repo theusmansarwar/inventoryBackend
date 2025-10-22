@@ -31,7 +31,6 @@ const AssetLocation = require("../Models/AssetLocationModel");
 const createAssetLocation = async (req, res) => {
   try {
     const {
- 
       assetName,
       branch,
       floor,
@@ -42,13 +41,12 @@ const createAssetLocation = async (req, res) => {
     } = req.body;
 
     const missingFields = [];
-      if (!assetName) missingFields.push({ name: "assetName", message: "Asset Name is required" });
-      if (!branch) missingFields.push({ name: "branch", message: "Branch is required" });
-      if (!floor) missingFields.push({ name: "floor", message: "Floor is required" });
-      if (!room) missingFields.push({ name: "room", message: "Room is required" });
-      if (!assignedTo) missingFields.push({ name: "assignedTo", message: "Assigned To is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
-    
+    if (!assetName) missingFields.push({ name: "assetName", message: "Asset Name is required" });
+    if (!branch) missingFields.push({ name: "branch", message: "Branch is required" });
+    if (!floor) missingFields.push({ name: "floor", message: "Floor is required" });
+    if (!room) missingFields.push({ name: "room", message: "Room is required" });
+    if (!assignedTo) missingFields.push({ name: "assignedTo", message: "Assigned To is required" });
+    if (!status) missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -58,7 +56,20 @@ const createAssetLocation = async (req, res) => {
       });
     }
 
+    // ✅ Generate unique locationId like "loc-0001"
+    const lastLocation = await AssetLocation.findOne().sort({ createdAt: -1 });
+
+    let newIdNumber = 1;
+    if (lastLocation && lastLocation.locationId) {
+      const lastNumber = parseInt(lastLocation.locationId.split("-")[1]);
+      newIdNumber = lastNumber + 1;
+    }
+
+    const locationId = `loc-${newIdNumber.toString().padStart(4, "0")}`;
+
+    // ✅ Create new Asset Location with generated ID
     const assetLocation = new AssetLocation({
+      locationId,
       assetName,
       branch,
       floor,
@@ -76,7 +87,11 @@ const createAssetLocation = async (req, res) => {
       data: assetLocation,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      status: 500,
+      message: "Something went wrong while creating Asset Location",
+      details: error.message,
+    });
   }
 };
 

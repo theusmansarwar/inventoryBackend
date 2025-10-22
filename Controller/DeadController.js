@@ -25,13 +25,13 @@ const DeadProduct = require("../Models/DeadModel");
 // ✅ Create Dead Product
 const createDeadProduct = async (req, res) => {
   try {
-    const { deadProductId, productName, reason, status, isPublished } = req.body;
+    const { productName, reason, status } = req.body;
 
     const missingFields = [];
 
     // 🔍 Validate only if publishing
   
-      if (!deadProductId) missingFields.push({ name: "deadProductId", message: "Dead Product ID is required" });
+     
       if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
       if (!reason) missingFields.push({ name: "reason", message: "Reason is required" });
       if (!status) missingFields.push({ name: "status", message: "Status is required" });
@@ -46,11 +46,9 @@ const createDeadProduct = async (req, res) => {
     }
 
     const deadProduct = new DeadProduct({
-      deadProductId,
       productName,
       reason,
-      status,
-      isPublished,
+      status
     });
 
     await deadProduct.save();

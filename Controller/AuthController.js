@@ -15,7 +15,7 @@ const loginUser = async (req, res) => {
     }
 
     // ✅ Find user
-    const user = await User.findOne({ email }).populate("role", "name description");
+    const user = await User.findOne({ email }).populate("role", "name description Modules");
     if (!user) {
       return res.status(404).json({
         status: 404,

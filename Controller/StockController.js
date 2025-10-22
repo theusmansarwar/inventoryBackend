@@ -1,26 +1,40 @@
 const Stock = require("../Models/StockModel");
 
+
 const createStock = async (req, res) => {
   try {
     const { productName, quantity, unitPrice, totalPrice, supplierName, currentDate, warrantyDate } = req.body;
 
     const missingFields = [];
 
-    //  Validate only if publishing
-   
-      if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
-      if (!quantity) missingFields.push({ name: "quantity", message: "Quantity is required" });
-      if (!unitPrice) missingFields.push({ name: "unitPrice", message: "Unit Price is required" });
-      if (!totalPrice) missingFields.push({ name: "totalPrice", message: "Total Price is required" });
-      if (!supplierName) missingFields.push({ name: "supplierName", message: "Supplier Name is required" });
-      if (!currentDate) missingFields.push({ name: "currentDate", message: "Current Date is required" });
-      if (!warrantyDate) missingFields.push({ name: "warrantyDate", message: "Warranty Date is required" });
-    
+    if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
+    if (!quantity) missingFields.push({ name: "quantity", message: "Quantity is required" });
+    if (!unitPrice) missingFields.push({ name: "unitPrice", message: "Unit Price is required" });
+    if (!totalPrice) missingFields.push({ name: "totalPrice", message: "Total Price is required" });
+    if (!supplierName) missingFields.push({ name: "supplierName", message: "Supplier Name is required" });
+    if (!currentDate) missingFields.push({ name: "currentDate", message: "Current Date is required" });
+    if (!warrantyDate) missingFields.push({ name: "warrantyDate", message: "Warranty Date is required" });
+
     if (missingFields.length > 0) {
-      return res.status(400).json({ status: 400, message: "Validation failed", missingFields });
+      return res.status(400).json({
+        status: 400,
+        message: "Validation failed",
+        missingFields,
+      });
     }
 
-    const newStock = new Stock({
+    // ✅ Auto-generate Stock ID (STK-0001, STK-0002, ...)
+    const lastStock = await Stock.findOne().sort({ createdAt: -1 });
+    let newStockID = "STK-0001";
+
+    if (lastStock && lastStock.stockID) {
+      const lastNumber = parseInt(lastStock.stockID.split("-")[1]);
+      const nextNumber = lastNumber + 1;
+      newStockID = `STK-${String(nextNumber).padStart(4, "0")}`;
+    }
+
+    const stock = new Stock({
+      stockID: newStockID,
       productName,
       quantity,
       unitPrice,
@@ -28,20 +42,20 @@ const createStock = async (req, res) => {
       supplierName,
       currentDate,
       warrantyDate,
-      // isPublished,
     });
 
-    await newStock.save();
+    await stock.save();
 
     return res.status(201).json({
       status: 201,
       message: "Stock created successfully",
-      data: newStock,
+      data: stock,
     });
 
   } catch (error) {
     return res.status(500).json({
-      error: "Something went wrong while creating Stock",
+      status: 500,
+      message: "Something went wrong while creating stock",
       details: error.message,
     });
   }

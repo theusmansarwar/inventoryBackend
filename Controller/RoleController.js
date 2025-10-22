@@ -47,18 +47,17 @@ const Roles = require("../Models/RoleModel")
     // Create Role
 const AddRole = async (req, res) => {
   try {
-    const { name, description, modules, status} = req.body;
+    const { name, description, modules, status } = req.body;
 
     const missingFields = [];
 
-    //  Validate required only if publishing
-   
-      if (!name) missingFields.push({ name: "name", message: "Name is required" });
-      if (!description) missingFields.push({ name: "description", message: "Description is required" });
-      if (!modules || modules.length === 0)
-        missingFields.push({ name: "modules", message: "At least one module is required" });
-      if (status === undefined) missingFields.push({ name: "status", message: "Status is required" });
-    
+    // 🔍 Validate required fields
+    if (!name) missingFields.push({ name: "name", message: "Name is required" });
+    if (!description) missingFields.push({ name: "description", message: "Description is required" });
+    if (!modules || modules.length === 0)
+      missingFields.push({ name: "modules", message: "At least one module is required" });
+    if (status === undefined) missingFields.push({ name: "status", message: "Status is required" });
+
     if (missingFields.length > 0) {
       return res.status(400).json({
         status: 400,
@@ -67,10 +66,23 @@ const AddRole = async (req, res) => {
       });
     }
 
+    // ✅ Generate unique roleId like "rol-0001"
+    const lastRole = await Roles.findOne().sort({ createdAt: -1 });
+
+    let newIdNumber = 1;
+    if (lastRole && lastRole.roleId) {
+      const lastNumber = parseInt(lastRole.roleId.split("-")[1]);
+      newIdNumber = lastNumber + 1;
+    }
+
+    const roleId = `rol-${newIdNumber.toString().padStart(4, "0")}`;
+
+    // ✅ Create new role with generated ID
     const role = new Roles({
+      roleId,
       name,
       description,
-      modules,
+      Modules: modules,
       status,
     });
 

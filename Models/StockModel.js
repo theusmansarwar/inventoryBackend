@@ -6,6 +6,10 @@ const stockSchema = new mongoose.Schema(
         type: String,
         required: true 
     },
+    stockID:{
+        type: String,
+        unique: true
+    },
     quantity:{
         type: Number, 
         required: true

@@ -38,14 +38,12 @@ const addAssignment = async (req, res) => {
 
     const missingFields = [];
 
-
-      if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
-      if (!employeeName) missingFields.push({ name: "employeeName", message: "Employee Name is required" });
-      if (!employeeId) missingFields.push({ name: "employeeId", message: "Employee ID is required" });
-      if (!assignDate) missingFields.push({ name: "assignDate", message: "Assign Date is required" });
-      if (!condition) missingFields.push({ name: "condition", message: "Condition is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
-    
+    if (!productName) missingFields.push({ name: "productName", message: "Product Name is required" });
+    if (!employeeName) missingFields.push({ name: "employeeName", message: "Employee Name is required" });
+    if (!employeeId) missingFields.push({ name: "employeeId", message: "Employee ID is required" });
+    if (!assignDate) missingFields.push({ name: "assignDate", message: "Assign Date is required" });
+    if (!condition) missingFields.push({ name: "condition", message: "Condition is required" });
+    if (!status) missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -55,6 +53,16 @@ const addAssignment = async (req, res) => {
       });
     }
 
+    // ✅ Get the last added asset to generate the next locationId
+    const lastAssignment = await Asset.findOne().sort({ _id: -1 });
+    let newLocationId = "LOC-0001"; // Default for first record
+
+    if (lastAssignment && lastAssignment.locationId) {
+      const lastNumber = parseInt(lastAssignment.locationId.split("-")[1]);
+      const nextNumber = lastNumber + 1;
+      newLocationId = `LOC-${String(nextNumber).padStart(4, "0")}`;
+    }
+
     const assignment = new Asset({
       productName,
       employeeName,
@@ -62,7 +70,7 @@ const addAssignment = async (req, res) => {
       assignDate,
       condition,
       status,
-      // isPublished,
+      locationId: newLocationId, // ✅ auto-generated field
     });
 
     await assignment.save();
@@ -73,9 +81,14 @@ const addAssignment = async (req, res) => {
       data: assignment,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      status: 500,
+      message: "Something went wrong while creating assignment",
+      details: error.message,
+    });
   }
 };
+
 
 // ✅ Get All Assignments (with Pagination + Search)
 const getAllAssignments = async (req, res) => {
