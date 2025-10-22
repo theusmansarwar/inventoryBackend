@@ -188,15 +188,14 @@ const updateUser = async (req, res) => {
 
     const missingFields = [];
 
-    // ✅ Validate required only if publishing
-   
-      if (!name) missingFields.push({ name: "name", message: "Name is required" });
-      if (!email) missingFields.push({ name: "email", message: "Email is required" });
-      if (!password) missingFields.push({ name: "password", message: "Password is required" });
-      if (!role) missingFields.push({ name: "role", message: "Role is required" });
-      if (status === undefined) missingFields.push({ name: "status", message: "Status is required" });
-   
+    // ✅ Validate required fields
+    if (!name) missingFields.push({ name: "name", message: "Name is required" });
+    if (!email) missingFields.push({ name: "email", message: "Email is required" });
+    if (!role) missingFields.push({ name: "role", message: "Role is required" });
+    if (status === undefined) missingFields.push({ name: "status", message: "Status is required" });
 
+    // ❌ password ko required mat banao
+    // ✅ sirf tab update karo jab user ne diya ho
     if (missingFields.length > 0) {
       return res.status(400).json({
         status: 400,
@@ -205,7 +204,7 @@ const updateUser = async (req, res) => {
       });
     }
 
-    // Check if role exists
+    // ✅ check valid role id
     if (role) {
       const roleExists = await Roles.findById(role);
       if (!roleExists) {
@@ -213,11 +212,11 @@ const updateUser = async (req, res) => {
       }
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { name, email, password, role, status },
-      { new: true }
-    );
+    // ✅ update object dynamically build karo
+    const updateData = { name, email, role, status };
+    if (password) updateData.password = password; // only if provided
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!updatedUser) {
       return res.status(404).json({
