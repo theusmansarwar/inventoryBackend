@@ -55,12 +55,12 @@ const addAssignment = async (req, res) => {
 
     // ✅ Get the last added asset to generate the next locationId
     const lastAssignment = await Asset.findOne().sort({ _id: -1 });
-    let newLocationId = "LOC-0001"; // Default for first record
+    let newAssetId = "ast-0001"; // Default for first record
 
-    if (lastAssignment && lastAssignment.locationId) {
-      const lastNumber = parseInt(lastAssignment.locationId.split("-")[1]);
+    if (lastAssignment && lastAssignment.assignmentId) {
+      const lastNumber = parseInt(lastAssignment.assignmentId.split("-")[1]);
       const nextNumber = lastNumber + 1;
-      newLocationId = `LOC-${String(nextNumber).padStart(4, "0")}`;
+      newAssetId = `ast-${String(nextNumber).padStart(4, "0")}`;
     }
 
     const assignment = new Asset({
@@ -70,7 +70,7 @@ const addAssignment = async (req, res) => {
       assignDate,
       condition,
       status,
-      locationId: newLocationId, // ✅ auto-generated field
+      assignmentId: newAssetId  // ✅ auto-generated field
     });
 
     await assignment.save();
@@ -93,17 +93,17 @@ const addAssignment = async (req, res) => {
 // ✅ Get All Assignments (with Pagination + Search)
 const getAllAssignments = async (req, res) => {
     try {
-        let { page, limit, search } = req.query;
+        let { page, limit, keyword } = req.query;
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 5;
 
         let filter = {};
-        if (search) {
+        if (keyword) {
             filter = {
                 $or: [
-                    { productName: { $regex: search, $options: "i" } },
-                    { employeeName: { $regex: search, $options: "i" } },
-                    { employeeId: { $regex: search, $options: "i" } }
+                    { productName: { $regex: keyword, $options: "i" } },
+                    { employeeName: { $regex: keyword, $options: "i" } },
+                    { employeeId: { $regex: keyword, $options: "i" } }
                 ]
             };
         }

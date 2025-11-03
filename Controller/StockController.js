@@ -128,7 +128,7 @@ const updateStock = async (req, res) => {
 
     const updatedStock = await Stock.findByIdAndUpdate(
       id,
-      { productName, quantity, unitPrice, totalPrice, supplierName, currentDate, warrantyDate, isPublished },
+      { productName, quantity, unitPrice, totalPrice, supplierName, currentDate, warrantyDate},
       { new: true }
     );
 

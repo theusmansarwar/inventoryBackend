@@ -68,13 +68,13 @@ const listDeadProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || "";
+    const keyword = req.query.keyword || "";
 
     const query = {
       $or: [
-        { productName: { $regex: search, $options: "i" } },
-        { reason: { $regex: search, $options: "i" } },
-        { status: { $regex: search, $options: "i" } },
+        { productName: { $regex: keyword, $options: "i" } },
+        { reason: { $regex: keyword, $options: "i" } },
+        { status: { $regex: keyword, $options: "i" } },
       ],
     };
 

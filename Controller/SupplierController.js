@@ -1,32 +1,9 @@
-const { parse } = require("dotenv");
-const Supplier= require("../Models/SupplierModel");
+const Supplier = require("../Models/SupplierModel");
 
-//create Supplier
-// const createSupplier = async(req,res) => {
-//     try{
-//         const{name,contact,email,address,status} = req.body;
-
-//         const supplier=await Supplier.create({
-//             name,
-//             contact,
-//             email,
-//             address,
-//             status
-//         });
-//         res.status(201).json({
-//             message: "Supplier created successfully",
-//             supplier
-//         });
-//     }catch(error){
-//         res.status(500).json({error: error.message});
-//     }
-// };
-
-// Create Supplier
+// ✅ Create Supplier
 const createSupplier = async (req, res) => {
   try {
     const { name, contact, email, address, status } = req.body;
-
     const missingFields = [];
 
     // ✅ Validate required fields
@@ -34,7 +11,8 @@ const createSupplier = async (req, res) => {
     if (!contact) missingFields.push({ name: "contact", message: "Contact is required" });
     if (!email) missingFields.push({ name: "email", message: "Email is required" });
     if (!address) missingFields.push({ name: "address", message: "Address is required" });
-    if (!status) missingFields.push({ name: "status", message: "Status is required" });
+    if (status === undefined || status === null)
+      missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -44,18 +22,36 @@ const createSupplier = async (req, res) => {
       });
     }
 
-    // ✅ Generate unique supplierId like "sup-0001"
-    const lastSupplier = await Supplier.findOne().sort({ createdAt: -1 });
+    // ✅ Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        status: 400,
+        message: "Invalid email format",
+        missingFields: [{ name: "email", message: "Invalid email format" }],
+      });
+    }
 
+    // ✅ Check for duplicate email
+    const existingSupplier = await Supplier.findOne({ email });
+    if (existingSupplier) {
+      return res.status(400).json({
+        status: 400,
+        message: "This email already exists",
+        missingFields: [{ name: "email", message: "This email already exists" }],
+      });
+    }
+
+    // ✅ Generate supplierId (like sup-0001)
+    const lastSupplier = await Supplier.findOne().sort({ createdAt: -1 });
     let newIdNumber = 1;
     if (lastSupplier && lastSupplier.supplierId) {
       const lastNumber = parseInt(lastSupplier.supplierId.split("-")[1]);
       newIdNumber = lastNumber + 1;
     }
-
     const supplierId = `sup-${newIdNumber.toString().padStart(4, "0")}`;
 
-    // ✅ Create new supplier with generated ID
+    // ✅ Create supplier
     const supplier = new Supplier({
       supplierId,
       name,
@@ -73,6 +69,7 @@ const createSupplier = async (req, res) => {
       data: supplier,
     });
   } catch (error) {
+    console.error("❌ Server Error:", error);
     return res.status(500).json({
       status: 500,
       message: "Something went wrong while creating supplier",
@@ -81,91 +78,46 @@ const createSupplier = async (req, res) => {
   }
 };
 
-//list + search supplier with pagination
-    const listSuppliers = async(req, res) => {
-        try{
-            const page = Math.max(parseInt(req.query.page) || 1, 1);
-            const limit = Math.min(parseInt(req.query.limit) || 10, 50);
-
-            //keyword
-            const keyword = (req.query.keyword || "").trim();
-            let filter ={};
-
-            if(keyword){
-                const regex= new RegExp(keyword, "i");
-                filter ={
-                    $or:[
-                        {name: {$regex: regex} },
-                        {contact: {$regex: regex}},
-                        {email: {$regex: regex}},
-                        {address: {$regex: regex}}
-                    ],
-                };
-            }
-
-            const totalSuppliers=await Supplier.countDocuments(filter);
-            const suppliers = await Supplier.find(filter)
-            .sort({createdAt: -1})
-            .limit(limit)
-            .skip((page-1) * limit);
-
-            res.status(200).json({
-                totalSuppliers,
-                totalPages: Math.ceil(totalSuppliers / limit),
-                currentPage: page,
-                limit,
-                suppliers,   
-            });
-        }catch(error){
-            res.status(500).json({error: error.message});
-        }
-        };
-
-        //updateSupplier
-        // const updateSupplier = async(req,res) => {
-        //     try{
-        //         const { id } = req.params;
-        //         const updatedSupplier = await Supplier.findByIdAndUpdate(id, req.body,{
-        //             new: true,
-        //             runValidators: true,
-        //         });
-
-        //     if(!updatedSupplier){
-        //         return res.status(404).json({error: "supplier not found"});
-        //     }
-
-        //     res.status(200).json({
-        //         message: "Supplier updated Successfully",
-        //         supplier: updatedSupplier,
-        //     });
-        // }
-        //     catch(error){
-        //         res.status(500).json({error: error.message});
-        //     }
-        // }
-
-        // Update Supplier
+// ✅ Update Supplier
 const updateSupplier = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, contact, email, address, status} = req.body;
+    const { name, contact, email, address, status } = req.body;
 
     const missingFields = [];
 
-    // ✅ Validate required only if publishing
-   
-      if (!name) missingFields.push({ name: "name", message: "Name is required" });
-      if (!contact) missingFields.push({ name: "contact", message: "Contact is required" });
-      if (!email) missingFields.push({ name: "email", message: "Email is required" });
-      if (!address) missingFields.push({ name: "address", message: "Address is required" });
-      if (!status) missingFields.push({ name: "status", message: "Status is required" });
-    
+    if (!name) missingFields.push({ name: "name", message: "Name is required" });
+    if (!contact) missingFields.push({ name: "contact", message: "Contact is required" });
+    if (!email) missingFields.push({ name: "email", message: "Email is required" });
+    if (!address) missingFields.push({ name: "address", message: "Address is required" });
+    if (status === undefined || status === null)
+      missingFields.push({ name: "status", message: "Status is required" });
 
     if (missingFields.length > 0) {
       return res.status(400).json({
         status: 400,
         message: "Validation failed",
         missingFields,
+      });
+    }
+
+    // ✅ Email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        status: 400,
+        message: "Invalid email format",
+        missingFields: [{ name: "email", message: "Invalid email format" }],
+      });
+    }
+
+    // ✅ Duplicate email check (exclude current supplier)
+    const existingSupplier = await Supplier.findOne({ email, _id: { $ne: id } });
+    if (existingSupplier) {
+      return res.status(400).json({
+        status: 400,
+        message: "This email already exists",
+        missingFields: [{ name: "email", message: "This email already exists" }],
       });
     }
 
@@ -188,6 +140,7 @@ const updateSupplier = async (req, res) => {
       data: updatedSupplier,
     });
   } catch (error) {
+    console.error("❌ Error updating supplier:", error);
     return res.status(500).json({
       status: 500,
       message: "Something went wrong while updating supplier",
@@ -196,34 +149,82 @@ const updateSupplier = async (req, res) => {
   }
 };
 
-        //deleteSupplier
-        const deleteSupplier = async(req,res) => {
-            try{
-                const { id } = req.params;
-                const deletedSupplier = await Supplier.findByIdAndDelete(id);
+// ✅ Delete Supplier
+const deleteSupplier = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedSupplier = await Supplier.findByIdAndDelete(id);
+    if (!deletedSupplier) {
+      return res.status(404).json({ status: 404, message: "Supplier not found" });
+    }
+    res.status(200).json({ status: 200, message: "Supplier deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ status: 500, message: error.message });
+  }
+};
 
-                if(!deletedSupplier){
-                    return res.status(404).json({error: "Supplier not found"});
-                }
-                res.status(200).json({message: "Supplier deleted Successfully"});
-            }catch(error){
-                res.status(500).json({error: error.message});
-            }
-        };
-        //multipleDelete
-        const deleteMultipleSuppliers = async(req,res) => {
-            try{
-                const { ids } = req.body;
-                if(!ids || ids.length === 0){
-                    return res.status(400).json({error: "please provide an array of Supplier IDs"});
-                }
-                const result=await Supplier.deleteMany({_id: {$in: ids} });
-                res.status(200).json({
-                    status: 200,
-                    message: `${result.deletedCount} supplier(s) deleted Successfully`,
-                });
-            }catch(error){
-                res.status(500).json({error: error.message});
-            }
-        };
-module.exports={createSupplier, listSuppliers, updateSupplier, deleteSupplier, deleteMultipleSuppliers};
+// ✅ List Suppliers
+const listSuppliers = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const keyword = (req.query.keyword || "").trim();
+
+    let filter = {};
+    if (keyword) {
+      const regex = new RegExp(keyword, "i");
+      filter = {
+        $or: [
+          { name: { $regex: regex } },
+          { contact: { $regex: regex } },
+          { email: { $regex: regex } },
+          { address: { $regex: regex } },
+        ],
+      };
+    }
+
+    const totalSuppliers = await Supplier.countDocuments(filter);
+    const suppliers = await Supplier.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit);
+
+    res.status(200).json({
+      status: 200,
+      totalSuppliers,
+      totalPages: Math.ceil(totalSuppliers / limit),
+      currentPage: page,
+      suppliers,
+    });
+  } catch (error) {
+    res.status(500).json({ status: 500, message: error.message });
+  }
+};
+
+// ✅ Delete Multiple
+const deleteMultipleSuppliers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || ids.length === 0) {
+      return res.status(400).json({
+        status: 400,
+        message: "Please provide an array of supplier IDs",
+      });
+    }
+    const result = await Supplier.deleteMany({ _id: { $in: ids } });
+    res.status(200).json({
+      status: 200,
+      message: `${result.deletedCount} supplier(s) deleted successfully`,
+    });
+  } catch (error) {
+    res.status(500).json({ status: 500, message: error.message });
+  }
+};
+
+module.exports = {
+  createSupplier,
+  listSuppliers,
+  updateSupplier,
+  deleteSupplier,
+  deleteMultipleSuppliers,
+};
