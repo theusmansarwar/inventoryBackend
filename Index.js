@@ -15,6 +15,7 @@ const maintenance = require("./Routes/MaintenanaceRoutes");
 const dead = require("./Routes/DeadRoutes");
 const assetLocation = require("./Routes/AssetLocationRoutes");
 const AuthRoutes = require("./Routes/AuthRoutes");
+const statsRoutes = require("./Routes/DashboardRoute");
 const app = express();
 const port = 5008;
 
@@ -42,6 +43,7 @@ app.use("/maintenance", maintenance);
 app.use("/dead",dead);
 app.use("/assetLocation", assetLocation);
 app.use("/auth", AuthRoutes);
+app.use("/stats", statsRoutes);
 // ✅ DB + Server start
 connectDB().then(() => {
     app.listen(port, () => {
