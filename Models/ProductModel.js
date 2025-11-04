@@ -7,19 +7,24 @@ const productSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    productId:{
-       type: String,
+    productId: {
+      type: String,
       unique: true,
     },
     category: {
       type: String,
       required: true,
-      enum: ["Hardware", "Software", "License"], // sirf ye hi values allow
+      enum: ["Hardware", "Software", "License"], // only these values allowed
     },
     status: {
       type: String,
       enum: ["Active", "Inactive"],
       default: "Active",
+    },
+    description: {
+      type: String,
+      trim: true,
+      default: "", // ✅ optional — if not provided, defaults to empty string
     },
   },
   { timestamps: true }
