@@ -208,7 +208,7 @@ const deleteMultipleMaintenance = async (req, res) => {
     res.status(200).json
     ({
         status: 200,
-         message: "Multiple maintenance records deleted"
+         message: "Maintenance records deleted"
     });
   } catch (error) {
     res.status(500).json
